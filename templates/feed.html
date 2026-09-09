@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента алгоритмов</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body class="feed-page">
+    <div class="video-container">
+        <video src="{{.Estimation.DemonstrationVideoKey}}" autoplay muted loop playsinline></video>
+        <div class="video-overlay">
+            <div class="video-info">
+                <h2>{{.Estimation.EstimationTitle}}</h2>
+                <p class="complexity">{{.Estimation.ComplexityClass}}</p>
+                <p>Объём: {{.Estimation.InputDataVolume}} элементов</p>
+                <p>Время: {{.Estimation.ExecutionTimeMs}} мс</p>
+                <p>Тип: {{.Estimation.OperationCategory}}</p>
+                <p class="description">{{.Estimation.EstimationDescription}}</p>
+            </div>
+            <div class="video-actions">
+                <div class="like-btn">❤️ {{len .Estimation.ApproverIDs}}</div>
+                <a href="/feed?id={{.Estimation.EstimationID}}&next=true" class="next-btn">↓</a>
+            </div>
+        </div>
+    </div>
+    <nav class="bottom-nav">
+        <a href="/feed" class="nav-item active">
+            <img src="/static/feed.svg" alt="Лента" class="nav-icon">
+        </a>
+        <a href="/add" class="nav-item">
+            <img src="/static/add.svg" alt="Добавить" class="nav-icon">
+        </a>
+        <a href="/grid" class="nav-item">
+            <img src="/static/grid.svg" alt="Плитка" class="nav-icon">
+        </a>
+    </nav>
+</body>
+</html>

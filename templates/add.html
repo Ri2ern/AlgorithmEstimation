@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить алгоритм</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body class="add-page">
+    <h2>Новая оценка алгоритма</h2>
+    <div class="media-upload">
+        <div class="upload-box">
+            <img src="{{.Estimation.PreviewImageKey}}" alt="Превью">
+            <p>{{.Estimation.PreviewImageKey}}</p>
+        </div>
+        <div class="upload-box">
+            <video src="{{.Estimation.DemonstrationVideoKey}}" controls></video>
+            <p>{{.Estimation.DemonstrationVideoKey}}</p>
+        </div>
+    </div>
+    <div class="form-fields">
+        <input type="text" value="{{.Estimation.EstimationTitle}}" placeholder="Название алгоритма">
+        <input type="text" value="{{.Estimation.ComplexityClass}}" placeholder="Класс сложности">
+        <input type="number" value="{{.Estimation.InputDataVolume}}" placeholder="Объём данных">
+        <input type="number" value="{{.Estimation.ExecutionTimeMs}}" placeholder="Время выполнения (мс)">
+        <input type="text" value="{{.Estimation.OperationCategory}}" placeholder="Тип операции">
+        <textarea placeholder="Описание">{{.Estimation.EstimationDescription}}</textarea>
+        <button class="publish-btn" disabled>Опубликовать</button>
+    </div>
+    <nav class="bottom-nav">
+        <a href="/feed" class="nav-item">
+            <img src="/static/feed.svg" alt="Лента" class="nav-icon">
+        </a>
+        <a href="/add" class="nav-item active">
+            <img src="/static/add.svg" alt="Добавить" class="nav-icon">
+        </a>
+        <a href="/grid" class="nav-item">
+            <img src="/static/grid.svg" alt="Плитка" class="nav-icon">
+        </a>
+    </nav>
+</body>
+</html>

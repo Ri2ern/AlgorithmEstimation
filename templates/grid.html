@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Плитка алгоритмов</title>
+    <link rel="stylesheet" href="/static/styles/style.css">
+</head>
+<body class="grid-page">
+    <div class="grid-header">
+        <h2>Сложность алгоритмов</h2>
+        <p class="subtitle">Оценщик</p>
+        <form method="GET" action="/grid" class="filter-form">
+            <div class="search-wrapper">
+                <img src="/static/search.svg" alt="Поиск" class="search-icon">
+                <input type="number" name="filter_volume" value="{{.FilterValue}}" placeholder="Фильтр по объёму данных">
+            </div>
+            <button type="submit" class="filter-btn">
+                <img src="/static/filter.svg" alt="Фильтр" class="filter-icon">
+            </button>
+        </form>
+    </div>
+    <div class="cards-grid">
+        {{range .Estimations}}
+        <a href="/feed?id={{.EstimationID}}" class="card">
+            <img src="{{.PreviewImageKey}}" alt="{{.EstimationTitle}}">
+            <div class="card-info">
+                <h3>{{.EstimationTitle}}</h3>
+                <p class="complexity">{{.ComplexityClass}}</p>
+                <p>⏱️ {{.ExecutionTimeMs}} мс</p>
+                <p class="likes">❤️ {{len .ApproverIDs}}</p>
+            </div>
+        </a>
+        {{end}}
+    </div>
+    <nav class="bottom-nav">
+        <a href="/feed" class="nav-item">
+            <img src="/static/feed.svg" alt="Лента" class="nav-icon">
+        </a>
+        <a href="/add" class="nav-item">
+            <img src="/static/add.svg" alt="Добавить" class="nav-icon">
+        </a>
+        <a href="/grid" class="nav-item active">
+            <img src="/static/grid.svg" alt="Плитка" class="nav-icon">
+        </a>
+    </nav>
+</body>
+</html>
