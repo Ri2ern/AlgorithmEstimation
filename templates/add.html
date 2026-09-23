@@ -5,33 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавить бенчмарк</title>
     <link rel="stylesheet" href="/static/styles/style.css">
+    <style>
+        .upload-box select {
+            width: 100%;
+            background: #0B1120;
+            border: 1px solid #06D6A0;
+            color: #FFFFFF;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body class="add-page">
     <h2>Новый бенчмарк</h2>
     
     <div class="media-upload-vertical">
         <div class="upload-box">
-            <img src="{{.Benchmark.PreviewImageKey}}" alt="Превью">
-            <p>Фото: {{.Benchmark.PreviewImageKey}}</p>
+            <img id="preview-image" src="{{.Benchmark.ImageURL}}" alt="Превью" onerror="this.src='/static/default.png'">
+            <label style="color: #94A3B8; font-size: 11px; display: block; margin-top: 8px;">Выберите изображение:</label>
+            <select id="select-image" name="image_url" required onchange="updatePreview('image')">
+                <option value="/static/binary.png" {{if eq .Benchmark.ImageURL "/static/binary.png"}}selected{{end}}>Бинарный поиск</option>
+                <option value="/static/hash.png" {{if eq .Benchmark.ImageURL "/static/hash.png"}}selected{{end}}>Хеш-таблица</option>
+                <option value="/static/bubble.png" {{if eq .Benchmark.ImageURL "/static/bubble.png"}}selected{{end}}>Сортировка пузырьком</option>
+                <option value="/static/default.png" {{if eq .Benchmark.ImageURL "/static/default.png"}}selected{{end}}>По умолчанию</option>
+            </select>
         </div>
+
         <div class="upload-box">
-            <video src="{{.Benchmark.VideoKey}}" controls></video>
-            <p>Видео: {{.Benchmark.VideoKey}}</p>
+            <video id="preview-video" src="{{.Benchmark.VideoURL}}" controls onerror="this.src='/static/default.mp4'"></video>
+            <label style="color: #94A3B8; font-size: 11px; display: block; margin-top: 8px;">Выберите видео:</label>
+            <select id="select-video" name="video_url" required onchange="updatePreview('video')">
+                <option value="/static/search_binary_search_ologn.mp4" {{if eq .Benchmark.VideoURL "/static/search_binary_search_ologn.mp4"}}selected{{end}}>Бинарный поиск</option>
+                <option value="/static/hash.mp4" {{if eq .Benchmark.VideoURL "/static/hash.mp4"}}selected{{end}}>Хеш-таблица</option>
+                <option value="/static/bubble.mp4" {{if eq .Benchmark.VideoURL "/static/bubble.mp4"}}selected{{end}}>Сортировка пузырьком</option>
+                <option value="/static/default.mp4" {{if eq .Benchmark.VideoURL "/static/default.mp4"}}selected{{end}}>По умолчанию</option>
+            </select>
         </div>
     </div>
 
-    <div class="form-fields">
-        <input type="text" value="{{.Benchmark.AlgoName}}" placeholder="Название алгоритма">
-        <input type="text" value="{{.Benchmark.Complexity}}" placeholder="Сложность (O(n))">
-        <input type="number" value="{{.Benchmark.InputSize}}" placeholder="Объём данных (N)">
-        <input type="number" value="{{.Benchmark.ExecTimeMs}}" placeholder="Время (мс)">
-        <textarea placeholder="Описание теста">{{.Benchmark.Description}}</textarea>
-    </div>
+    <form method="POST" action="/add" class="form-fields">
+        <input type="hidden" name="id" value="{{.Benchmark.ID}}">
+        <input type="text" name="name" value="{{.Benchmark.Name}}" placeholder="Название алгоритма" required>
+        <input type="number" name="input_size" value="{{.Benchmark.InputSize}}" placeholder="Объём данных (N)" required>
+        <input type="number" name="exec_time_ms" value="{{.Benchmark.ExecTimeMs}}" placeholder="Время (мс)" required>
+        <textarea name="description" placeholder="Описание теста">{{.Benchmark.Description}}</textarea>
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            {{if eq .Benchmark.Status "draft"}}
+                <button type="submit" formaction="/add" class="publish-btn" style="background: #3B82F6;">Далее (Создать)</button>
+                <button type="submit" formaction="/publish" class="publish-btn">Опубликовать</button>
+                <button type="submit" formaction="/delete" class="publish-btn" style="background: #EF4444;">Удалить</button>
+            {{else}}
+                <button type="submit" formaction="/publish" class="publish-btn">Опубликовать</button>
+                <button type="submit" formaction="/delete" class="publish-btn" style="background: #EF4444;">Удалить</button>
+            {{end}}
+        </div>
+    </form>
 
     <nav class="bottom-nav">
         <a href="/feed" class="nav-item"><img src="/static/feed.svg" class="nav-icon"></a>
         <a href="/add" class="nav-item active"><img src="/static/add.svg" class="nav-icon"></a>
         <a href="/grid" class="nav-item"><img src="/static/grid.svg" class="nav-icon"></a>
     </nav>
+
+    <script>
+        function updatePreview(type) {
+            if (type === 'image') {
+                document.getElementById('preview-image').src = document.getElementById('select-image').value;
+            } else if (type === 'video') {
+                const video = document.getElementById('preview-video');
+                video.src = document.getElementById('select-video').value;
+                video.load();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -6,116 +6,78 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type Handler struct {
-	Repository *repository.Repository
+	Repo *repository.Repository
 }
 
-func NewHandler(r *repository.Repository) *Handler {
-	return &Handler{Repository: r}
+func NewHandler(repo *repository.Repository) *Handler {
+	return &Handler{Repo: repo}
 }
 
-type FeedData struct {
-	Benchmark repository.AlgoBenchmark
-}
-
-type GridData struct {
-	Benchmarks []repository.AlgoBenchmark
-	FilterMin  string
-	FilterMax  string
-}
-
-func (h *Handler) FeedHandler(ctx *gin.Context) {
-	id := ctx.Query("id")
-	nextParam := ctx.Query("next")
-	var current repository.AlgoBenchmark
-
-	if id != "" {
-		b, err := h.Repository.GetBenchmarkByID(id)
-		if err == nil {
-			current = b
-			if nextParam == "true" {
-				benchmarks, _ := h.Repository.GetBenchmarks()
-				for i, b := range benchmarks {
-					if b.BenchmarkID == id {
-						for j := 1; j <= len(benchmarks); j++ {
-							idx := (i + j) % len(benchmarks)
-							if benchmarks[idx].Status == "published" {
-								current = benchmarks[idx]
-								break
-							}
-						}
-						break
-					}
-				}
-			}
-		}
+// GET 1: Лента
+func (h *Handler) GetFeed(ctx *gin.Context) {
+	idStr := ctx.Query("id")
+	var id uint
+	if idStr != "" {
+		idUint, _ := strconv.ParseUint(idStr, 10, 32)
+		id = uint(idUint)
 	}
-
-	if current.BenchmarkID == "" {
-		benchmarks, _ := h.Repository.GetBenchmarks()
-		for _, b := range benchmarks {
-			if b.Status == "published" {
-				current = b
-				break
-			}
-		}
-	}
-
-	current.PreviewImageKey = repository.GetMinioURL(current.PreviewImageKey)
-	current.VideoKey = repository.GetMinioURL(current.VideoKey)
-
-	ctx.HTML(http.StatusOK, "feed.html", FeedData{Benchmark: current})
+	
+	benchmark, _ := h.Repo.GetFeed(id)
+	ctx.HTML(http.StatusOK, "feed.html", gin.H{"Benchmark": benchmark})
 }
 
-func (h *Handler) AddHandler(ctx *gin.Context) {
-	draft, err := h.Repository.GetDraft()
-	if err != nil {
-		logrus.Error(err)
-	}
-	draft.PreviewImageKey = repository.GetMinioURL(draft.PreviewImageKey)
-	draft.VideoKey = repository.GetMinioURL(draft.VideoKey)
-	ctx.HTML(http.StatusOK, "add.html", FeedData{Benchmark: draft})
-}
-
-func (h *Handler) GridHandler(ctx *gin.Context) {
+// GET 2: Плитка с поиском
+func (h *Handler) GetGrid(ctx *gin.Context) {
 	minStr := ctx.Query("filter_min")
 	maxStr := ctx.Query("filter_max")
-
-	benchmarks, err := h.Repository.GetBenchmarks()
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	var filtered []repository.AlgoBenchmark
-	for _, b := range benchmarks {
-		if b.Status == "published" || b.Status == "draft" {
-			include := true
-			if minStr != "" {
-				minVal, _ := strconv.Atoi(minStr)
-				if b.InputSize < minVal {
-					include = false
-				}
-			}
-			if maxStr != "" {
-				maxVal, _ := strconv.Atoi(maxStr)
-				if b.InputSize > maxVal {
-					include = false
-				}
-			}
-
-			if include {
-				b.PreviewImageKey = repository.GetMinioURL(b.PreviewImageKey)
-				filtered = append(filtered, b)
-			}
-		}
-	}
-
-	ctx.HTML(http.StatusOK, "grid.html", GridData{
-		Benchmarks: filtered,
-		FilterMin:  minStr,
-		FilterMax:  maxStr,
+	
+	min, _ := strconv.Atoi(minStr)
+	max, _ := strconv.Atoi(maxStr)
+	
+	benchmarks, _ := h.Repo.GetGrid(min, max)
+	ctx.HTML(http.StatusOK, "grid.html", gin.H{
+		"Benchmarks": benchmarks,
+		"FilterMin":  minStr,
+		"FilterMax":  maxStr,
 	})
+}
+
+// GET 3: Страница добавления
+func (h *Handler) GetAdd(ctx *gin.Context) {
+	userID := uint(1) // Хардкод ID пользователя для лабораторной
+	draft, _ := h.Repo.GetOrCreateDraft(userID)
+	ctx.HTML(http.StatusOK, "add.html", gin.H{"Benchmark": draft})
+}
+
+// POST 1: Создание черновика (кнопка "Далее")
+func (h *Handler) PostCreateDraft(ctx *gin.Context) {
+	name := ctx.PostForm("name")
+	img := ctx.PostForm("image_url")
+	vid := ctx.PostForm("video_url")
+	input, _ := strconv.Atoi(ctx.PostForm("input_size"))
+	exec, _ := strconv.Atoi(ctx.PostForm("exec_time_ms"))
+	
+	h.Repo.CreateDraft(name, img, vid, input, exec, 1)
+	ctx.Redirect(http.StatusSeeOther, "/add")
+}
+
+// POST 2: Публикация карточки (кнопка "Опубликовать")
+func (h *Handler) PostPublish(ctx *gin.Context) {
+	idStr := ctx.PostForm("id")
+	id, _ := strconv.ParseUint(idStr, 10, 32)
+	
+	h.Repo.PublishDraft(uint(id))
+	ctx.Redirect(http.StatusSeeOther, "/grid")
+}
+
+// POST 3: Удаление услуги через сырой SQL (кнопка "Удалить")
+func (h *Handler) PostDelete(ctx *gin.Context) {
+	idStr := ctx.PostForm("id")
+	id, _ := strconv.ParseUint(idStr, 10, 32)
+	
+	h.Repo.DeleteServiceRawSQL(uint(id))
+	ctx.Redirect(http.StatusSeeOther, "/grid")
 }

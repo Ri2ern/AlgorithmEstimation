@@ -8,11 +8,16 @@
 </head>
 <body class="feed-page">
     <div class="video-container">
-        <video src="{{.Benchmark.VideoKey}}" autoplay muted loop playsinline></video>
+        {{if .Benchmark.VideoURL}}
+            <video src="{{.Benchmark.VideoURL}}" autoplay muted loop playsinline onerror="this.src='/static/default.mp4'"></video>
+        {{else}}
+            <video src="/static/default.mp4" autoplay muted loop playsinline></video>
+        {{end}}
+        
         <div class="video-overlay">
             <div class="video-left">
-                <h2>{{.Benchmark.AlgoName}}</h2>
-                <p class="complexity">{{.Benchmark.Complexity}}</p>
+                <h2>{{.Benchmark.Name}}</h2>
+                <p class="complexity">{{.Benchmark.Status}}</p>
                 <p class="description">{{.Benchmark.Description}}</p>
             </div>
             <div class="video-right">
@@ -22,7 +27,7 @@
                 </div>
                 <div class="actions">
                     <div class="like-btn">❤️ {{len .Benchmark.Likes}}</div>
-                    <a href="/feed?id={{.Benchmark.BenchmarkID}}&next=true" class="next-btn">↓</a>
+                    <a href="/feed?id={{.Benchmark.ID}}" class="next-btn">↓</a>
                 </div>
             </div>
         </div>

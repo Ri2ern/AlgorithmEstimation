@@ -22,11 +22,15 @@
     </div>
     <div class="cards-grid">
         {{range .Benchmarks}}
-        <a href="/feed?id={{.BenchmarkID}}" class="card">
-            <img src="{{.PreviewImageKey}}" alt="{{.AlgoName}}">
+        <a href="/feed?id={{.ID}}" class="card">
+            {{if .ImageURL}}
+                <img src="{{.ImageURL}}" alt="{{.Name}}" onerror="this.src='/static/default.png'">
+            {{else}}
+                <img src="/static/default.png" alt="{{.Name}}">
+            {{end}}
             <div class="card-info">
-                <h3>{{.AlgoName}}</h3>
-                <p class="complexity">{{.Complexity}}</p>
+                <h3>{{.Name}}</h3>
+                <p class="complexity">{{.Status}}</p>
                 <p class="stats">N: {{.InputSize}} | ⏱️ {{.ExecTimeMs}} мс</p>
                 <p class="likes">❤️ {{len .Likes}}</p>
             </div>

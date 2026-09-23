@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 func StartServer() {
@@ -14,7 +13,7 @@ func StartServer() {
 
 	repo, err := repository.NewRepository()
 	if err != nil {
-		logrus.Error("Ошибка инициализации репозитория")
+		log.Fatal("Ошибка инициализации БД:", err)
 	}
 
 	h := handler.NewHandler(repo)
@@ -23,15 +22,20 @@ func StartServer() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
 
-	r.GET("/feed", h.FeedHandler)
-	r.GET("/add", h.AddHandler)
-	r.GET("/grid", h.GridHandler)
+	// 3 GET метода
+	r.GET("/feed", h.GetFeed)
+	r.GET("/grid", h.GetGrid)
+	r.GET("/add", h.GetAdd)
+	
+	// 3 POST метода
+	r.POST("/add", h.PostCreateDraft)
+	r.POST("/publish", h.PostPublish)
+	r.POST("/delete", h.PostDelete)
+	
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(303, "/feed")
 	})
 
 	log.Println("Server started on http://localhost:8080")
 	r.Run(":8080")
-
-	log.Println("Application terminated!")
 }
