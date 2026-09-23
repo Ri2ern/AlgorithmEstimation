@@ -22,19 +22,27 @@
     </div>
     <div class="cards-grid">
         {{range .Benchmarks}}
-        <a href="/feed?id={{.ID}}" class="card">
-            {{if .ImageURL}}
-                <img src="{{.ImageURL}}" alt="{{.Name}}" onerror="this.src='/static/default.png'">
-            {{else}}
-                <img src="/static/default.png" alt="{{.Name}}">
-            {{end}}
-            <div class="card-info">
-                <h3>{{.Name}}</h3>
-                <p class="complexity">{{.Status}}</p>
-                <p class="stats">N: {{.InputSize}} | ⏱️ {{.ExecTimeMs}} мс</p>
-                <p class="likes">❤️ {{len .Likes}}</p>
-            </div>
-        </a>
+        <div class="card">
+            <a href="/feed?id={{.ID}}">
+                {{if .ImageURL}}
+                    <img src="{{.ImageURL}}" alt="{{.Name}}" onerror="this.src='/static/default.png'">
+                {{else}}
+                    <img src="/static/default.png" alt="{{.Name}}">
+                {{end}}
+                <div class="card-info">
+                    <h3>{{.Name}}</h3>
+                    <p class="complexity">{{.Status}}</p>
+                    <p class="stats">N: {{.InputSize}} | ⏱️ {{.ExecTimeMs}} мс</p>
+                    <p class="likes">❤️ {{len .Likes}}</p>
+                </div>
+            </a>
+            <form method="POST" action="/delete" style="margin: 0; padding: 8px 12px; border-top: 1px solid #1E293B;">
+                <input type="hidden" name="id" value="{{.ID}}">
+                <button type="submit" style="width: 100%; background: #EF4444; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">
+                    🗑️ Удалить
+                </button>
+            </form>
+        </div>
         {{end}}
     </div>
     <nav class="bottom-nav">

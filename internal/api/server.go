@@ -22,12 +22,10 @@ func StartServer() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
 
-	// 3 GET метода
 	r.GET("/feed", h.GetFeed)
 	r.GET("/grid", h.GetGrid)
 	r.GET("/add", h.GetAdd)
 	
-	// 3 POST метода
 	r.POST("/add", h.PostCreateDraft)
 	r.POST("/publish", h.PostPublish)
 	r.POST("/delete", h.PostDelete)

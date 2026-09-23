@@ -16,20 +16,22 @@ func NewHandler(repo *repository.Repository) *Handler {
 	return &Handler{Repo: repo}
 }
 
-// GET 1: Лента
 func (h *Handler) GetFeed(ctx *gin.Context) {
 	idStr := ctx.Query("id")
+	nextParam := ctx.Query("next")
+	
 	var id uint
 	if idStr != "" {
 		idUint, _ := strconv.ParseUint(idStr, 10, 32)
 		id = uint(idUint)
 	}
 	
-	benchmark, _ := h.Repo.GetFeed(id)
+	next := nextParam == "true"
+	
+	benchmark, _ := h.Repo.GetFeed(id, next)
 	ctx.HTML(http.StatusOK, "feed.html", gin.H{"Benchmark": benchmark})
 }
 
-// GET 2: Плитка с поиском
 func (h *Handler) GetGrid(ctx *gin.Context) {
 	minStr := ctx.Query("filter_min")
 	maxStr := ctx.Query("filter_max")
@@ -45,14 +47,12 @@ func (h *Handler) GetGrid(ctx *gin.Context) {
 	})
 }
 
-// GET 3: Страница добавления
 func (h *Handler) GetAdd(ctx *gin.Context) {
-	userID := uint(1) // Хардкод ID пользователя для лабораторной
+	userID := uint(1)
 	draft, _ := h.Repo.GetOrCreateDraft(userID)
 	ctx.HTML(http.StatusOK, "add.html", gin.H{"Benchmark": draft})
 }
 
-// POST 1: Создание черновика (кнопка "Далее")
 func (h *Handler) PostCreateDraft(ctx *gin.Context) {
 	name := ctx.PostForm("name")
 	img := ctx.PostForm("image_url")
@@ -64,7 +64,6 @@ func (h *Handler) PostCreateDraft(ctx *gin.Context) {
 	ctx.Redirect(http.StatusSeeOther, "/add")
 }
 
-// POST 2: Публикация карточки (кнопка "Опубликовать")
 func (h *Handler) PostPublish(ctx *gin.Context) {
 	idStr := ctx.PostForm("id")
 	id, _ := strconv.ParseUint(idStr, 10, 32)
@@ -73,7 +72,6 @@ func (h *Handler) PostPublish(ctx *gin.Context) {
 	ctx.Redirect(http.StatusSeeOther, "/grid")
 }
 
-// POST 3: Удаление услуги через сырой SQL (кнопка "Удалить")
 func (h *Handler) PostDelete(ctx *gin.Context) {
 	idStr := ctx.PostForm("id")
 	id, _ := strconv.ParseUint(idStr, 10, 32)
