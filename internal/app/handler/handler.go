@@ -14,65 +14,60 @@ type Handler struct {
 }
 
 func NewHandler(r *repository.Repository) *Handler {
-	return &Handler{
-		Repository: r,
-	}
+	return &Handler{Repository: r}
 }
 
 type FeedData struct {
-	Estimation repository.AlgorithmEstimation
+	Benchmark repository.AlgoBenchmark
 }
 
 type GridData struct {
-	Estimations []repository.AlgorithmEstimation
-	FilterValue string
+	Benchmarks []repository.AlgoBenchmark
+	FilterMin  string
+	FilterMax  string
 }
 
 func (h *Handler) FeedHandler(ctx *gin.Context) {
 	id := ctx.Query("id")
 	nextParam := ctx.Query("next")
-
-	var current repository.AlgorithmEstimation
+	var current repository.AlgoBenchmark
 
 	if id != "" {
-		est, err := h.Repository.GetEstimationByID(id)
-		if err != nil {
-			logrus.Error(err)
-		}
-		current = est
-
-		if nextParam == "true" {
-			estimations, _ := h.Repository.GetEstimations()
-			for i, e := range estimations {
-				if e.EstimationID == id {
-					for j := 1; j <= len(estimations); j++ {
-						idx := (i + j) % len(estimations)
-						if estimations[idx].PublicationStatus == "published" {
-							current = estimations[idx]
-							break
+		b, err := h.Repository.GetBenchmarkByID(id)
+		if err == nil {
+			current = b
+			if nextParam == "true" {
+				benchmarks, _ := h.Repository.GetBenchmarks()
+				for i, b := range benchmarks {
+					if b.BenchmarkID == id {
+						for j := 1; j <= len(benchmarks); j++ {
+							idx := (i + j) % len(benchmarks)
+							if benchmarks[idx].Status == "published" {
+								current = benchmarks[idx]
+								break
+							}
 						}
+						break
 					}
-					break
 				}
 			}
 		}
 	}
 
-	if current.EstimationID == "" {
-		estimations, _ := h.Repository.GetEstimations()
-		for _, est := range estimations {
-			if est.PublicationStatus == "published" {
-				current = est
+	if current.BenchmarkID == "" {
+		benchmarks, _ := h.Repository.GetBenchmarks()
+		for _, b := range benchmarks {
+			if b.Status == "published" {
+				current = b
 				break
 			}
 		}
 	}
 
 	current.PreviewImageKey = repository.GetMinioURL(current.PreviewImageKey)
-	current.DemonstrationVideoKey = repository.GetMinioURL(current.DemonstrationVideoKey)
+	current.VideoKey = repository.GetMinioURL(current.VideoKey)
 
-	data := FeedData{Estimation: current}
-	ctx.HTML(http.StatusOK, "feed.html", data)
+	ctx.HTML(http.StatusOK, "feed.html", FeedData{Benchmark: current})
 }
 
 func (h *Handler) AddHandler(ctx *gin.Context) {
@@ -80,41 +75,47 @@ func (h *Handler) AddHandler(ctx *gin.Context) {
 	if err != nil {
 		logrus.Error(err)
 	}
-
 	draft.PreviewImageKey = repository.GetMinioURL(draft.PreviewImageKey)
-	draft.DemonstrationVideoKey = repository.GetMinioURL(draft.DemonstrationVideoKey)
-
-	data := FeedData{Estimation: draft}
-	ctx.HTML(http.StatusOK, "add.html", data)
+	draft.VideoKey = repository.GetMinioURL(draft.VideoKey)
+	ctx.HTML(http.StatusOK, "add.html", FeedData{Benchmark: draft})
 }
 
 func (h *Handler) GridHandler(ctx *gin.Context) {
-	filterParam := ctx.Query("filter_volume")
+	minStr := ctx.Query("filter_min")
+	maxStr := ctx.Query("filter_max")
 
-	estimations, err := h.Repository.GetEstimations()
+	benchmarks, err := h.Repository.GetBenchmarks()
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	var filtered []repository.AlgorithmEstimation
-	for _, est := range estimations {
-		if est.PublicationStatus == "published" || est.PublicationStatus == "draft" {
-			if filterParam != "" {
-				filterVol, _ := strconv.Atoi(filterParam)
-				if est.InputDataVolume == filterVol {
-					est.PreviewImageKey = repository.GetMinioURL(est.PreviewImageKey)
-					filtered = append(filtered, est)
+	var filtered []repository.AlgoBenchmark
+	for _, b := range benchmarks {
+		if b.Status == "published" || b.Status == "draft" {
+			include := true
+			if minStr != "" {
+				minVal, _ := strconv.Atoi(minStr)
+				if b.InputSize < minVal {
+					include = false
 				}
-			} else {
-				est.PreviewImageKey = repository.GetMinioURL(est.PreviewImageKey)
-				filtered = append(filtered, est)
+			}
+			if maxStr != "" {
+				maxVal, _ := strconv.Atoi(maxStr)
+				if b.InputSize > maxVal {
+					include = false
+				}
+			}
+
+			if include {
+				b.PreviewImageKey = repository.GetMinioURL(b.PreviewImageKey)
+				filtered = append(filtered, b)
 			}
 		}
 	}
 
-	data := GridData{
-		Estimations: filtered,
-		FilterValue: filterParam,
-	}
-	ctx.HTML(http.StatusOK, "grid.html", data)
+	ctx.HTML(http.StatusOK, "grid.html", GridData{
+		Benchmarks: filtered,
+		FilterMin:  minStr,
+		FilterMax:  maxStr,
+	})
 }
