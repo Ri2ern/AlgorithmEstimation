@@ -5,18 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавить бенчмарк</title>
     <link rel="stylesheet" href="/static/styles/style.css">
+    <style>
+        .upload-box select {
+            width: 100%;
+            background: #0B1120;
+            border: 1px solid #06D6A0;
+            color: #FFFFFF;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-box select:hover {
+            background: #151F32;
+        }
+        .upload-box select:focus {
+            outline: none;
+            border-color: #06D6A0;
+            box-shadow: 0 0 0 2px rgba(6, 214, 160, 0.3);
+        }
+    </style>
 </head>
 <body class="add-page">
     <h2>Новый бенчмарк</h2>
     
     <div class="media-upload-vertical">
+        <!-- Блок с фото и выбором -->
         <div class="upload-box">
-            <img src="{{.Benchmark.PreviewImageKey}}" alt="Превью">
-            <p>Фото: {{.Benchmark.PreviewImageKey}}</p>
+            <img id="preview-image" src="{{.Benchmark.PreviewImageKey}}" alt="Превью">
+            <label style="color: #94A3B8; font-size: 11px; display: block; margin-top: 8px;">Выберите изображение:</label>
+            <select id="select-image" onchange="updatePreview('image')">
+                <option value="http://localhost:9000/algorithms-media/bubble.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/bubble.png"}}selected{{end}}>Сортировка пузырьком</option>
+                <option value="http://localhost:9000/algorithms-media/binary.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/binary.png"}}selected{{end}}>Бинарный поиск</option>
+                <option value="http://localhost:9000/algorithms-media/constant.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/constant.png"}}selected{{end}}>Константное время</option>
+                <option value="http://localhost:9000/algorithms-media/quick_sort.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/quick_sort.png"}}selected{{end}}>Быстрая сортировка</option>
+                <option value="http://localhost:9000/algorithms-media/linear.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/linear.png"}}selected{{end}}>Линейный поиск</option>
+                <option value="http://localhost:9000/algorithms-media/merge.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/merge.png"}}selected{{end}}>Сортировка слиянием</option>
+                <option value="http://localhost:9000/algorithms-media/hash.png" {{if eq .Benchmark.PreviewImageKey "http://localhost:9000/algorithms-media/hash.png"}}selected{{end}}>Хеш-таблица</option>
+            </select>
         </div>
+
+        <!-- Блок с видео и выбором -->
         <div class="upload-box">
-            <video src="{{.Benchmark.VideoKey}}" controls></video>
-            <p>Видео: {{.Benchmark.VideoKey}}</p>
+            <video id="preview-video" src="{{.Benchmark.VideoKey}}" controls></video>
+            <label style="color: #94A3B8; font-size: 11px; display: block; margin-top: 8px;">Выберите видео:</label>
+            <select id="select-video" onchange="updatePreview('video')">
+                <option value="http://localhost:9000/algorithms-media/algorithm_sorting_on_squared.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/algorithm_sorting_on_squared.mp4"}}selected{{end}}>Сортировка на квадрате</option>
+                <option value="http://localhost:9000/algorithms-media/search_binary_search_ologn.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/search_binary_search_ologn.mp4"}}selected{{end}}>Бинарный поиск</option>
+                <option value="http://localhost:9000/algorithms-media/big_o_notation_overview.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/big_o_notation_overview.mp4"}}selected{{end}}>Big O обзор</option>
+                <option value="http://localhost:9000/algorithms-media/quick_sort.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/quick_sort.mp4"}}selected{{end}}>Быстрая сортировка</option>
+                <option value="http://localhost:9000/algorithms-media/linear.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/linear.mp4"}}selected{{end}}>Линейный поиск</option>
+                <option value="http://localhost:9000/algorithms-media/merge.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/merge.mp4"}}selected{{end}}>Сортировка слиянием</option>
+                <option value="http://localhost:9000/algorithms-media/hash.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/hash.mp4"}}selected{{end}}>Хеш-таблица</option>
+                <option value="http://localhost:9000/algorithms-media/bubble.mp4" {{if eq .Benchmark.VideoKey "http://localhost:9000/algorithms-media/bubble.mp4"}}selected{{end}}>Сортировка пузырьком</option>
+            </select>
         </div>
     </div>
 
@@ -33,5 +77,21 @@
         <a href="/add" class="nav-item active"><img src="/static/add.svg" class="nav-icon"></a>
         <a href="/grid" class="nav-item"><img src="/static/grid.svg" class="nav-icon"></a>
     </nav>
+
+    <script>
+        // Мгновенное обновление превью при выборе нового значения
+        function updatePreview(type) {
+            if (type === 'image') {
+                const select = document.getElementById('select-image');
+                const preview = document.getElementById('preview-image');
+                preview.src = select.value;
+            } else if (type === 'video') {
+                const select = document.getElementById('select-video');
+                const preview = document.getElementById('preview-video');
+                preview.src = select.value;
+                preview.load(); // Перезагружаем видео
+            }
+        }
+    </script>
 </body>
 </html>
