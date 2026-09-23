@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"lab1-algorithms/internal/app/models"
 	"log"
 
@@ -36,6 +37,26 @@ func (r *Repository) GetFeed(id uint) (models.AlgorithmBenchmark, error) {
 	}
 	
 	r.DB.Preload("Likes").Where("status = 'published'").Limit(1).First(&benchmark)
+	return benchmark, nil
+}
+
+func (r *Repository) GetNextPublished(currentID uint) (models.AlgorithmBenchmark, error) {
+	var benchmark models.AlgorithmBenchmark
+	
+	err := r.DB.Preload("Likes").
+		Where("status = 'published' AND id > ?", currentID).
+		Order("id ASC").
+		Limit(1).
+		First(&benchmark).Error
+	
+	if err != nil {
+		r.DB.Preload("Likes").
+			Where("status = 'published'").
+			Order("id ASC").
+			Limit(1).
+			First(&benchmark)
+	}
+	
 	return benchmark, nil
 }
 
@@ -90,14 +111,15 @@ func (r *Repository) PublishDraft(id uint) error {
 	return r.DB.Model(&models.AlgorithmBenchmark{}).Where("id = ?", id).Update("status", "published").Error
 }
 
-// Удаление через SQL КУРСОР (построчная обработка, без ORM)
+// SQL КУРСОР 
 func (r *Repository) DeleteServiceRawSQL(id uint) error {
-	query := `
+	query := fmt.Sprintf(`
 		DO $$
 		DECLARE
 			cur CURSOR FOR 
 				SELECT id FROM algorithm_benchmarks 
-				WHERE id = $1 FOR UPDATE;
+				WHERE id = %d 
+				FOR UPDATE;
 			rec RECORD;
 		BEGIN
 			OPEN cur;
@@ -109,6 +131,7 @@ func (r *Repository) DeleteServiceRawSQL(id uint) error {
 			END IF;
 			CLOSE cur;
 		END $$;
-	`
-	return r.DB.Exec(query, id).Error
+	`, id)
+	
+	return r.DB.Exec(query).Error
 }

@@ -26,9 +26,21 @@ func (h *Handler) GetFeed(ctx *gin.Context) {
 		id = uint(idUint)
 	}
 	
-	next := nextParam == "true"
+	// Если передан параметр next=true, ищем следующую опубликованную запись
+	if nextParam == "true" && id > 0 {
+		benchmark, _ := h.Repo.GetFeed(id)
+		if benchmark.ID > 0 {
+			// Получаем следующую опубликованную запись после текущей
+			nextBenchmark, _ := h.Repo.GetNextPublished(benchmark.ID)
+			if nextBenchmark.ID > 0 {
+				ctx.HTML(http.StatusOK, "feed.html", gin.H{"Benchmark": nextBenchmark})
+				return
+			}
+		}
+	}
 	
-	benchmark, _ := h.Repo.GetFeed(id, next)
+	// Иначе просто получаем запись по ID или первую опубликованную
+	benchmark, _ := h.Repo.GetFeed(id)
 	ctx.HTML(http.StatusOK, "feed.html", gin.H{"Benchmark": benchmark})
 }
 
