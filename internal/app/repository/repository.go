@@ -25,40 +25,18 @@ func NewRepository() (*Repository, error) {
 	return &Repository{DB: db}, nil
 }
 
-// Получить одну запись для ленты. Если next=true, ищем следующую после currentID
-func (r *Repository) GetFeed(currentID uint, next bool) (models.AlgorithmBenchmark, error) {
+func (r *Repository) GetFeed(id uint) (models.AlgorithmBenchmark, error) {
 	var benchmark models.AlgorithmBenchmark
-
-	// Получаем все опубликованные записи
-	var benchmarks []models.AlgorithmBenchmark
-	r.DB.Preload("Likes").Where("status = 'published'").Order("id ASC").Find(&benchmarks)
-
-	if len(benchmarks) == 0 {
-		return benchmark, nil
-	}
-
-	// Если нужно найти следующую запись после текущей
-	if next && currentID > 0 {
-		for i, b := range benchmarks {
-			if b.ID == currentID {
-				// Берём следующую по кругу
-				nextIdx := (i + 1) % len(benchmarks)
-				return benchmarks[nextIdx], nil
-			}
+	
+	if id > 0 {
+		err := r.DB.Preload("Likes").Where("id = ? AND status = 'published'", id).First(&benchmark).Error
+		if err == nil {
+			return benchmark, nil
 		}
 	}
-
-	// Если ID передан и запись найдена — возвращаем её
-	if currentID > 0 {
-		for _, b := range benchmarks {
-			if b.ID == currentID {
-				return b, nil
-			}
-		}
-	}
-
-	// Иначе возвращаем первую опубликованную
-	return benchmarks[0], nil
+	
+	r.DB.Preload("Likes").Where("status = 'published'").Limit(1).First(&benchmark)
+	return benchmark, nil
 }
 
 func (r *Repository) GetGrid(minSize, maxSize int) ([]models.AlgorithmBenchmark, error) {
@@ -112,7 +90,25 @@ func (r *Repository) PublishDraft(id uint) error {
 	return r.DB.Model(&models.AlgorithmBenchmark{}).Where("id = ?", id).Update("status", "published").Error
 }
 
+// Удаление через SQL КУРСОР (построчная обработка, без ORM)
 func (r *Repository) DeleteServiceRawSQL(id uint) error {
-	query := "UPDATE algorithm_benchmarks SET status = 'deleted', updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+	query := `
+		DO $$
+		DECLARE
+			cur CURSOR FOR 
+				SELECT id FROM algorithm_benchmarks 
+				WHERE id = $1 FOR UPDATE;
+			rec RECORD;
+		BEGIN
+			OPEN cur;
+			FETCH cur INTO rec;
+			IF FOUND THEN
+				UPDATE algorithm_benchmarks 
+				SET status = 'deleted', updated_at = CURRENT_TIMESTAMP 
+				WHERE CURRENT OF cur;
+			END IF;
+			CLOSE cur;
+		END $$;
+	`
 	return r.DB.Exec(query, id).Error
 }
